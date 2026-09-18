@@ -1,0 +1,108 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/build/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "host-clang",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/host-clang.cmake"
+    },
+    {
+      "name": "host-gcc",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/host-gcc.cmake"
+    },
+    {
+      "name": "host-debug",
+      "displayName": "Host Clang debug (reference compiler)",
+      "inherits": "host-clang",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "host-release",
+      "displayName": "Host Clang release (-O2)",
+      "inherits": "host-clang",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "host-asan-ubsan",
+      "displayName": "Host ASan+UBSan+LSan (GCC runtime)",
+      "inherits": "host-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VHDP_SANITIZE": "address,undefined"
+      }
+    },
+    {
+      "name": "host-tsan",
+      "displayName": "Host TSan (GCC runtime, ASLR disabled for tests)",
+      "inherits": "host-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VHDP_SANITIZE": "thread",
+        "VHDP_TEST_LAUNCHER": "setarch;-R"
+      }
+    },
+    {
+      "name": "android-base",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/android-ndk.cmake",
+      "cacheVariables": {
+        "ANDROID_PLATFORM": "android-23",
+        "ANDROID_STL": "c++_static",
+        "ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES": "ON"
+      }
+    },
+    {
+      "name": "android-arm64-release",
+      "displayName": "Android arm64-v8a release (official NDK toolchain)",
+      "inherits": "android-base",
+      "cacheVariables": {
+        "ANDROID_ABI": "arm64-v8a",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "android-x86_64-debug",
+      "displayName": "Android x86_64 debug (emulator)",
+      "inherits": "android-base",
+      "cacheVariables": {
+        "ANDROID_ABI": "x86_64",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "host-debug", "configurePreset": "host-debug" },
+    { "name": "host-release", "configurePreset": "host-release" },
+    { "name": "host-asan-ubsan", "configurePreset": "host-asan-ubsan" },
+    { "name": "host-tsan", "configurePreset": "host-tsan" },
+    { "name": "android-arm64-release", "configurePreset": "android-arm64-release" },
+    { "name": "android-x86_64-debug", "configurePreset": "android-x86_64-debug" }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "timeout": 300 }
+    },
+    { "name": "host-debug", "inherits": "test-base", "configurePreset": "host-debug" },
+    { "name": "host-release", "inherits": "test-base", "configurePreset": "host-release" },
+    { "name": "host-asan-ubsan", "inherits": "test-base", "configurePreset": "host-asan-ubsan" },
+    { "name": "host-tsan", "inherits": "test-base", "configurePreset": "host-tsan" }
+  ]
+}
